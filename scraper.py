@@ -39,5 +39,4 @@ def is_valid(url):
         print ("TypeError for ", parsed)
         raise
     
-    if 1 == 1:
-        pass
+   
