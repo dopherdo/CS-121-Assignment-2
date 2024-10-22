@@ -38,3 +38,6 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+    
+    if 1 == 1:
+        pass
