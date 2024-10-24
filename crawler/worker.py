@@ -29,12 +29,16 @@ class Worker(Thread):
             domain = tldextract.extract(tbd_url)
 
             # Check if the domain is currently being used
+
             if domain in self.frontier.url_cooldowns:
                 elapsed_time = time.time() - self.frontier.url_cooldowns[domain]
 
                 if elapsed_time < self.config.time_delay:
                     waiting_time = self.config.time_delay - elapsed_time
                     time.sleep(waiting_time)
+                    self.frontier.append(url)
+                    continue
+                    
 
             # Put the latest time the domain has been requested
             self.frontier.url_cooldowns[domain] = time.time()

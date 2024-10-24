@@ -33,7 +33,7 @@ def extract_next_links(url, resp):
     for link in soup.find_all('a', href=True):
         # extract the url section of it
         possible_url = link['href']
-        # if the possible_url is not complete, join it with the original url
+        # if the possible_url is not complete, join it with the original url, otherwise it ignores the original
         entire_url = urljoin(url, possible_url)
         # append it to the list
         lists_to_check.append(entire_url)
