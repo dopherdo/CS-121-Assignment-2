@@ -22,9 +22,12 @@ def is_valid(url):
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
     try:
+        # Gets the domain of the URL
         parsed = urlparse(url)
         if parsed.scheme not in set(["http", "https"]):
             return False
+        # This checks what domains not to use
+        # Add domains to use
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
