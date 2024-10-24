@@ -2,7 +2,6 @@ import re
 from urllib.parse import urlparse, urljoin
 # To find the other embedded URLs
 from bs4 import BeautifulSoup
-from utils.config import Config
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
