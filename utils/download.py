@@ -4,6 +4,7 @@ import time
 
 from utils.response import Response
 
+# Gets the web page content by hitting the URL
 def download(url, config, logger=None):
     host, port = config.cache_server
     resp = requests.get(
