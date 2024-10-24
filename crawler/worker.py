@@ -16,13 +16,20 @@ class Worker(Thread):
         assert {getsource(scraper).find(req) for req in {"from requests import", "import requests"}} == {-1}, "Do not use requests in scraper.py"
         assert {getsource(scraper).find(req) for req in {"from urllib.request import", "import urllib.request"}} == {-1}, "Do not use urllib.request in scraper.py"
         super().__init__(daemon=True)
+        self.run_again = True
         
     def run(self):
         while True:
             # Gets the url from the frontier
             tbd_url = self.frontier.get_tbd_url()
+
+            # Only exit if it tries it twice and there are no more urls to expand on
+            if not tbd_url and self.run_again:
+                time.sleep(5000)
+                self.run_again = False
+                continue
             # Checks if no more crawlers to use
-            if not tbd_url:
+            elif not tbd_url:
                 self.logger.info("Frontier is empty. Stopping Crawler.")
                 break
             # Get the domain without the subdomains
@@ -36,9 +43,11 @@ class Worker(Thread):
                 if elapsed_time < self.config.time_delay:
                     waiting_time = self.config.time_delay - elapsed_time
                     time.sleep(waiting_time)
-                    self.frontier.append(url)
+                    self.frontier.append(tbd_url)
                     continue
                     
+
+            self.run_again = True
 
             # Put the latest time the domain has been requested
             self.frontier.url_cooldowns[domain] = time.time()

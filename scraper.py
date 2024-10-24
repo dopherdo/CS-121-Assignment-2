@@ -2,6 +2,7 @@ import re
 from urllib.parse import urlparse, urljoin
 # To find the other embedded URLs
 from bs4 import BeautifulSoup
+from utils.config import Config
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -44,12 +45,19 @@ def is_valid(url):
     # Decide whether to crawl this url or not. 
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
+
+    # Add Functionality to check if the URL contains one of the 5 valid domains
+        # use VALID_URLS
     try:
         # Gets the domain of the URL
         parsed = urlparse(url)
         if parsed.scheme not in set(["http", "https"]):
             return False
         # This checks what domains not to use
+        
+        # TO DO:
+        # If domain in valid domains
+
         # Add domains to use
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
