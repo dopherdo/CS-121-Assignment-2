@@ -1,5 +1,7 @@
 import re
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
+# To find the other embedded URLs
+from bs4 import BeautifulSoup
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -15,7 +17,28 @@ def extract_next_links(url, resp):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    return list()
+    
+    # Checks if the response status is valid
+    if resp.status != 200:
+        print(f"The error: {resp.error} occurred. The status of this error is {resp.status}")
+        return list()
+    
+    # Parses the content and finds all of the other links in the text
+    soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
+
+    lists_to_check = []
+
+    # Goes through every found link
+    # href is the type of link to make sure it is a link
+    for link in soup.find_all('a', href=True):
+        # extract the url section of it
+        possible_url = link['href']
+        # if the possible_url is not complete, join it with the original url
+        entire_url = urljoin(url, possible_url)
+        # append it to the list
+        lists_to_check.append(entire_url)
+
+    return lists_to_check
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
