@@ -48,17 +48,26 @@ def is_valid(url):
     # Add Functionality to check if the URL contains one of the 5 valid domains
         # use VALID_URLS
     try:
-        # Gets the domain of the URL
         parsed = urlparse(url)
-        if parsed.scheme not in set(["http", "https"]):
-            return False
-        # This checks what domains not to use
-        
-        # TO DO:
-        # If domain in valid domains
 
-        # Add domains to use
-        return not re.match(
+        if parsed.scheme not in set(["http", "https", "today"]):
+            return False
+        if not re.match(
+            r'^(\w*.)(ics.uci.edu|cs.uci.edu|stat.uci.edu|today.uci.edu\/department\/information_computer_sciences)$',parsed.netloc):
+            return False
+        if "?share=" in url:
+            return False
+        if "pdf" in url:
+            return False
+        if "redirect" in url:
+            return False
+        if "#comment" in url:
+            return False
+        if "#respond" in url:
+            return False
+        if "#comments" in url:
+            return False
+        if re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
             + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
@@ -66,8 +75,11 @@ def is_valid(url):
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower()):
+            return False
+
 
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+    # https://github.com/Araz-cs/spacetime-crawler4py121/blob/master/scraper.py
