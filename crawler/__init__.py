@@ -13,6 +13,7 @@ class Crawler(object):
         self.unique_pages = unique_pages
 
     # used for reporting #1 we can maintain a count of unique pages in Crawler.unique_pages
+    # A unique page in the reporting context is a page that has a unique URL regardless of fragment
     def is_unique_page(self, url):
         # Parse the URL and discard the fragment
         parsed = urlparse(url)
