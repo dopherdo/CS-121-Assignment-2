@@ -82,6 +82,5 @@ def is_valid(url):
 
 
 # check with sha-256 for exact or near page duplicates
-# used for reporting #1 we can maintain a count of unique pages in Crawler.unique_pages
-def is_unique(url):
+def not_duplicate(url):
     pass
