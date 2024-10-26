@@ -55,17 +55,13 @@ def is_valid(url):
         if not re.match(
             r'^(\w*.)(ics.uci.edu|cs.uci.edu|stat.uci.edu|today.uci.edu\/department\/information_computer_sciences)$',parsed.netloc):
             return False
-        if "?share=" in url:
+        
+        disallowed_keywords = ["?share=", "pdf", "redirect", "#comment", "#respond", "#comments"]
+        if any(keyword in url for keyword in disallowed_keywords):
             return False
-        if "pdf" in url:
-            return False
-        if "redirect" in url:
-            return False
-        if "#comment" in url:
-            return False
-        if "#respond" in url:
-            return False
-        if "#comments" in url:
+        
+        # Check for repetitive path patterns
+        if re.search(r'(\/\w+\/)\1{2,}', parsed.path):
             return False
         if re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
