@@ -33,8 +33,8 @@ class Worker(Thread):
                 self.logger.info("Frontier is empty. Stopping Crawler.")
                 break
             # Get the domain without the subdomains
-            domain = tldextract.extract(tbd_url)
-
+            domain = tldextract.extract(tbd_url).domain
+            
             # Check if the domain is currently being used
 
             if domain in self.frontier.url_cooldowns:

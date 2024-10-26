@@ -38,6 +38,10 @@ def extract_next_links(url, resp):
         # append it to the list
         lists_to_check.append(entire_url)
 
+    print("Lists_to_check:")
+    print(lists_to_check)
+    print()
+
     return lists_to_check
 
 def is_valid(url):
