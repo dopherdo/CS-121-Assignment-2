@@ -43,7 +43,7 @@ class Worker(Thread):
                 if elapsed_time < self.config.time_delay:
                     waiting_time = self.config.time_delay - elapsed_time
                     time.sleep(waiting_time)
-                    self.frontier.append(tbd_url)
+                    self.frontier.to_be_downloaded.append(tbd_url)
                     continue
                     
 
