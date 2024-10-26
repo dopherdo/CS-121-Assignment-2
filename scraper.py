@@ -79,3 +79,9 @@ def is_valid(url):
         print ("TypeError for ", parsed)
         raise
     # https://github.com/Araz-cs/spacetime-crawler4py121/blob/master/scraper.py
+
+
+# check with sha-256 for exact or near page duplicates
+# used for reporting #1 we can maintain a count of unique pages in Crawler.unique_pages
+def is_unique(url):
+    pass

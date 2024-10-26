@@ -3,12 +3,13 @@ from crawler.frontier import Frontier
 from crawler.worker import Worker
 
 class Crawler(object):
-    def __init__(self, config, restart, frontier_factory=Frontier, worker_factory=Worker):
+    def __init__(self, config, restart, frontier_factory=Frontier, worker_factory=Worker, unique_pages=0):
         self.config = config
         self.logger = get_logger("CRAWLER")
         self.frontier = frontier_factory(config, restart)
         self.workers = list()
         self.worker_factory = worker_factory
+        self.unique_pages = unique_pages
 
     def start_async(self):
         self.workers = [
