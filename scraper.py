@@ -38,6 +38,10 @@ def extract_next_links(url, resp):
         # append it to the list
         lists_to_check.append(entire_url)
 
+    # Print each URL as you find it
+    for url in urls:
+        print("Found URL:", url)  # Or use logging for file output
+
     print("Lists_to_check:")
     print(lists_to_check)
     print()
