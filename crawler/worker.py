@@ -25,7 +25,7 @@ class Worker(Thread):
 
             # Only exit if it tries it twice and there are no more urls to expand on
             if not tbd_url and self.run_again:
-                time.sleep(5000)
+                time.sleep(5)
                 self.run_again = False
                 continue
             # Checks if no more crawlers to use
