@@ -18,7 +18,7 @@ class Frontier(object):
         self._lock = threading.Lock()
         self.visited_urls = set()  # Set to track visited URLs
         self.seen_hashes = set()
-        self.lsh = MinHashLSH(threhold=0.85, num_perm=128)
+        self.lsh = MinHashLSH(threshold=0.85, num_perm=128)
         self.doc_count = 0
 
         

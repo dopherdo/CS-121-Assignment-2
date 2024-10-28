@@ -135,8 +135,7 @@ def is_valid(url):
     # https://github.com/Araz-cs/spacetime-crawler4py121/blob/master/scraper.py
 
 
-# check with sha-256 for exact or near page duplicates
-def is_duplicate(soup, frontier, threshold = 0.85, perms=128):
+def is_duplicate(soup, frontier, threshold=0.85, perms=128):
     content = str(soup)
     # Generate a SHA-256 hash of the content
     content_hash = hashlib.sha256(content.encode()).hexdigest()
@@ -144,30 +143,27 @@ def is_duplicate(soup, frontier, threshold = 0.85, perms=128):
     # Check for duplicate by verifying if hash is in `seen_hashes`
     if content_hash in frontier.seen_hashes:
         return True  # Duplicate content
+    
     # Get clean text
     text = soup.get_text(separator=' ', strip=True).lower()
     text = re.sub(r'[^\w\s]', '', text)
     text = re.sub(r'\s+', ' ', text).strip()
     
-    # Create MinHash
+    # Create MinHash for current content
     minhash = MinHash(num_perm=perms)
     for i in range(len(text) - 3 + 1):
         shingle = text[i:i + 3]
         minhash.update(shingle.encode('utf-8'))
     
-    # Check near duplicates
+    # Check for near duplicates using `query`
     similar_docs = frontier.lsh.query(minhash)
     
+    # If similar documents are found, consider them duplicates
     if similar_docs:
-        for doc_id in similar_docs:
-            existing_minhash = frontier.lsh.get_minhash(doc_id)
-            similarity = minhash.jaccard(existing_minhash)
-            if similarity >= threshold:
-                return True
+        return True
     
-    # If no duplicates found, add to indexes
+    # If no duplicates found, add this document to the indexes
     frontier.seen_hashes.add(content_hash)
     frontier.lsh.insert(f"doc_{frontier.doc_count}", minhash)
     frontier.doc_count += 1
     return False
-    
