@@ -26,7 +26,7 @@ class Frontier(object):
                 f"Found save file {self.config.save_file}, deleting it.")
             os.remove(self.config.save_file)
         # Load existing save file, or create one if it does not exist.
-        self.save = shelve.open(self.config.save_file)
+        self.save = shelve.open(self.config.save_file, writeback=True)
         print(f"{self.save}")
         if restart:
             for url in self.config.seed_urls:
@@ -86,3 +86,7 @@ class Frontier(object):
     def update_url_cooldown(self, url, cooldown):
         with self._lock:
             self.url_cooldowns[url] = cooldown
+    
+    def close(self):
+        # Close the shelve when done
+        self.save.close()
