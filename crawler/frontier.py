@@ -6,6 +6,8 @@ from queue import Queue, Empty
 import queue
 from utils import get_logger, get_urlhash, normalize
 from scraper import is_valid
+from datasketch import MinHash, MinHashLSH
+
 
 class Frontier(object):
     def __init__(self, config, restart):
@@ -16,6 +18,8 @@ class Frontier(object):
         self._lock = threading.Lock()
         self.visited_urls = set()  # Set to track visited URLs
         self.seen_hashes = set()
+        self.lsh = MinHashLSH(threhold=0.85, num_perm=128)
+        self.doc_count = 0
 
         
         if not os.path.exists(self.config.save_file) and not restart:

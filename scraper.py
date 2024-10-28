@@ -1,5 +1,6 @@
 import re
 from urllib.parse import urlparse, urljoin, urldefrag
+from datasketch import MinHash, MinHashLSH
 # To find the other embedded URLs
 from bs4 import BeautifulSoup
 import os
@@ -135,7 +136,7 @@ def is_valid(url):
 
 
 # check with sha-256 for exact or near page duplicates
-def is_duplicate(soup, frontier):
+def is_duplicate(soup, frontier, threshold = 0.85, perms=128):
     content = str(soup)
     # Generate a SHA-256 hash of the content
     content_hash = hashlib.sha256(content.encode()).hexdigest()
@@ -143,7 +144,30 @@ def is_duplicate(soup, frontier):
     # Check for duplicate by verifying if hash is in `seen_hashes`
     if content_hash in frontier.seen_hashes:
         return True  # Duplicate content
-    else:
-        frontier.seen_hashes.add(content_hash)  # Add new hash to the set
-        return False
+    # Get clean text
+    text = soup.get_text(separator=' ', strip=True).lower()
+    text = re.sub(r'[^\w\s]', '', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    
+    # Create MinHash
+    minhash = MinHash(num_perm=perms)
+    for i in range(len(text) - 3 + 1):
+        shingle = text[i:i + 3]
+        minhash.update(shingle.encode('utf-8'))
+    
+    # Check near duplicates
+    similar_docs = frontier.lsh.query(minhash)
+    
+    if similar_docs:
+        for doc_id in similar_docs:
+            existing_minhash = frontier.lsh.get_minhash(doc_id)
+            similarity = minhash.jaccard(existing_minhash)
+            if similarity >= threshold:
+                return True
+    
+    # If no duplicates found, add to indexes
+    frontier.seen_hashes.add(content_hash)
+    frontier.lsh.insert(f"doc_{frontier.doc_count}", minhash)
+    frontier.doc_count += 1
+    return False
     
