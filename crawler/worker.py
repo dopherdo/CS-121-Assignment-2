@@ -13,7 +13,6 @@ class Worker(Thread):
         self.config = config
         self.frontier = frontier
         # Initialize a lock for thread-safe operations
-        self.visited_urls = set()  # Set to track visited URLs
         # self.visited_lock = Lock()  # Lock for synchronizing access to the visited URLs
         # basic check for requests in scraper
         assert {getsource(scraper).find(req) for req in {"from requests import", "import requests"}} == {-1}, "Do not use requests in scraper.py"
@@ -25,7 +24,7 @@ class Worker(Thread):
         while True:
             # Gets the url from the frontier
             tbd_url = self.frontier.get_tbd_url()
-
+            print(f"Opening {tbd_url}")
             # Only exit if it tries it twice and there are no more urls to expand on
             if not tbd_url and self.run_again:
                 time.sleep(5)
@@ -56,21 +55,18 @@ class Worker(Thread):
             self.frontier.update_url_cooldown(domain, time.time())
             
             resp = download(tbd_url, self.config, self.logger)
-            self.logger.info(
-                f"Downloaded {tbd_url}, status <{resp.status}>, "
-                f"using cache {self.config.cache_server}.")
+
 
             # Scrape URLs and add them to frontier queue & visited_urls
-            scraped_urls = scraper.scraper(tbd_url, resp)
+            scraped_urls = scraper.scraper(tbd_url, resp, self.frontier)
             for scraped_url in scraped_urls:
                # with self.visited_lock: # use when multithreading 
-                if scraped_url in self.visited_urls:
+                if scraped_url in self.frontier.visited_urls:
                     continue
-                self.visited_urls.add(scraped_url)
-            
+                self.frontier.visited_urls.add(scraped_url)
                 self.frontier.add_url(scraped_url)
 
-                
+            print(f"Finishing {tbd_url}")
             # Mark that the url is complete
             self.frontier.mark_url_complete(tbd_url)
             time.sleep(self.config.time_delay)

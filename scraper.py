@@ -1,20 +1,22 @@
 import re
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urlparse, urljoin, urldefrag
 # To find the other embedded URLs
 from bs4 import BeautifulSoup
 import os
+import hashlib
+
 
 import json
 
-def scraper(url, resp):
-    links = extract_next_links(url, resp)
-    new_links = [link for link in links if is_valid(link)] 
-    print(new_links)
+def scraper(url, resp, frontier):
+    
+    soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
+    links = extract_next_links(soup, url, resp)
+    new_links = [link for link in links if is_valid(link) and not is_duplicate(soup, frontier)]
     return new_links
 
 
-def extract_text_from_page(content, url, folder_name="tokens_by_subdomain"): #content is a string
-    soup = BeautifulSoup(content, 'html.parser') #Creates object to extract text from HTML Content"
+def extract_text_from_page(soup, url, folder_name="tokens_by_subdomain"): #content is a string
     curr_tokens = [] # TODO: SHOULD BE A JSON INSTEAD
   
     # TODO: check to see if file (check subdomain) is already there
@@ -36,24 +38,21 @@ def extract_text_from_page(content, url, folder_name="tokens_by_subdomain"): #co
     #Checks if the json file for the subdomain exists already
     if os.path.exists(json_tokens_file_path):
         with open(json_tokens_file_path, "r") as file:
-            subdomain_tokens = json.load(file) #loads existing tokens
+            existing_tokens = json.load(file)
+            # Add current tokens to existing ones
+            existing_tokens[curr_subdomain] = existing_tokens.get(curr_subdomain, []) + curr_tokens
+            tokens_to_save = existing_tokens
     else:
-        subdomain_tokens = [] #empty file
+        # Create new tokens dictionary if file doesn't exist
+        tokens_to_save = {curr_subdomain: curr_tokens}
     
-
-    
-    #append current tokens to existing tokens (could include duplicates)
-    subdomain_tokens[curr_subdomain] = subdomain_tokens.get(curr_subdomain, []) + curr_tokens
-
-    
-    #saves tokens to the file with good formatting
+    # Save tokens to file
     with open(json_tokens_file_path, "w") as file:
-        json.dump(subdomain_tokens, file, indent=4)
-    
+        json.dump(tokens_to_save, file, indent=4)
 
     
 
-def extract_next_links(url, resp):
+def extract_next_links(soup, url, resp):
     # Implementation required.
     # url: the URL that was used to get the page
     # resp.url: the actual url of the page
@@ -69,10 +68,7 @@ def extract_next_links(url, resp):
         print(f"The error: {resp.error} occurred. The status of this error is {resp.status}")
         return list()
     
-    extract_text_from_page(resp.raw_response.content, resp.raw_response.url)
-
-    # Parses the content and finds all of the other links in the text
-    soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
+    extract_text_from_page(soup, resp.raw_response.url)
 
     lists_to_check = []
 
@@ -83,10 +79,13 @@ def extract_next_links(url, resp):
         possible_url = link['href']
         # if the possible_url is not complete, join it with the original url, otherwise it ignores the original
         entire_url = urljoin(url, possible_url)
+        # Gets rid of fragmentation
+        defragged_url, fragment = urldefrag(entire_url)
+    
         # append it to the list
-        lists_to_check.append(entire_url)
+        lists_to_check.append(defragged_url)
 
-
+    
     return lists_to_check
 
 def is_valid(url):
@@ -96,11 +95,17 @@ def is_valid(url):
 
     # Add Functionality to check if the URL contains one of the 5 valid domains
         # use VALID_URLS
+    invalid_domains = {"mse.ics.uci.edu, tippers.ics.uci.edu, mhcis.ics.uci.edu"}
     try:
         parsed = urlparse(url)
 
         if parsed.scheme not in set(["http", "https"]):
             return False
+
+
+        if parsed.netloc.lower() in invalid_domains:
+            return False
+
         if not re.match(
             r'^(\w*.)(ics.uci.edu|cs.uci.edu|stat.uci.edu|today.uci.edu\/department\/information_computer_sciences)$',parsed.netloc):
             return False
@@ -130,5 +135,15 @@ def is_valid(url):
 
 
 # check with sha-256 for exact or near page duplicates
-def not_duplicate(url):
-    pass
+def is_duplicate(soup, frontier):
+    content = str(soup)
+    # Generate a SHA-256 hash of the content
+    content_hash = hashlib.sha256(content.encode()).hexdigest()
+    
+    # Check for duplicate by verifying if hash is in `seen_hashes`
+    if content_hash in frontier.seen_hashes:
+        return True  # Duplicate content
+    else:
+        frontier.seen_hashes.add(content_hash)  # Add new hash to the set
+        return False
+    

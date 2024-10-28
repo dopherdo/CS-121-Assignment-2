@@ -43,10 +43,20 @@ def create_report(json_files):
             word_count = 0
 
             # Update word frequency manually
-            for subdomain, tokens in json_data.items():
-                # counts the number of words
-                word_count = len(tokens)
+            subdomain_name = next(iter(json_data))
+            tokens = json_data[subdomain_name]
+            # counts the number of words
+            myBool = True
+            word_count = len(tokens)
+            for word in tokens:
                 word = word.lower()  # Convert to lower case for case insensitivity
+                for char in word:
+                    if not char.isalnum():
+                        myBool = False
+                        break
+                if myBool == False:
+                    continue
+                            
                 if word not in stopwords:
                     if word in word_counter:
                         word_counter[word] += 1

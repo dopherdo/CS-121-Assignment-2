@@ -14,6 +14,9 @@ class Frontier(object):
         self.to_be_downloaded = queue.Queue()
         self.url_cooldowns = {}
         self._lock = threading.Lock()
+        self.visited_urls = set()  # Set to track visited URLs
+        self.seen_hashes = set()
+
         
         if not os.path.exists(self.config.save_file) and not restart:
             # Save file does not exist, but request to load save.
@@ -27,7 +30,6 @@ class Frontier(object):
             os.remove(self.config.save_file)
         # Load existing save file, or create one if it does not exist.
         self.save = shelve.open(self.config.save_file)
-        print(f"{self.save}")
         if restart:
             for url in self.config.seed_urls:
                 self.add_url(url)
