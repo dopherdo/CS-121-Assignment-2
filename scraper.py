@@ -13,42 +13,17 @@ def scraper(url, resp):
     return new_links
 
 
-def extract_tokens_from_page(content, url, folder_name="tokens_by_subdomain"):
+def extract_text_from_page(content, url, folder_name="tokens_by_subdomain"): #content is a string
     soup = BeautifulSoup(content, 'html.parser') #Creates object to extract text from HTML Content"
     curr_tokens = [] # TODO: SHOULD BE A JSON INSTEAD
-
-    # Define the set of stopwords
-    stopwords = {
-    "a", "about", "above", "after", "again", "against", "all", "am", "an",
-    "and", "any", "are", "aren't", "as", "at", "be", "because", "been",
-    "before", "being", "below", "between", "both", "but", "by", "can't",
-    "cannot", "could", "couldn't", "did", "didn't", "do", "does", "doesn't",
-    "doing", "don't", "down", "during", "each", "few", "for", "from", "further",
-    "had", "hadn't", "has", "hasn't", "have", "haven't", "having", "he", "he'd",
-    "he'll", "he's", "her", "here", "here's", "hers", "herself", "him", "himself",
-    "his", "how", "how's", "i", "i'd", "i'll", "i'm", "i've", "if", "in", "into",
-    "is", "isn't", "it", "it's", "its", "itself", "let's", "me", "more", "most",
-    "mustn't", "my", "myself", "no", "nor", "not", "of", "off", "on", "once",
-    "only", "or", "other", "ought", "our", "ours", "ourselves", "out", "over",
-    "own", "same", "shan't", "she", "she'd", "she'll", "she's", "should",
-    "shouldn't", "so", "some", "such", "than", "that", "that's", "the", "their",
-    "theirs", "them", "themselves", "then", "there", "there's", "these", "they",
-    "they'd", "they'll", "they're", "they've", "this", "those", "through", "to",
-    "too", "under", "until", "up", "very", "was", "wasn't", "we", "we'd", "we'll",
-    "we're", "we've", "were", "weren't", "what", "what's", "when", "when's",
-    "where", "where's", "which", "while", "who", "who's", "whom", "why", "why's",
-    "with", "won't", "would", "wouldn't", "you", "you'd", "you'll", "you're",
-    "you've", "your", "yours", "yourself", "yourselves"
-    }
   
     # TODO: check to see if file (check subdomain) is already there
 
     # Extract all text content as tokens and filter out stopwords
     for text in soup.stripped_strings: 
         # Split into words and filter out stopwords
-        words = text.split()
-        filtered_words = [word.lower() for word in words if word.lower() not in stopwords]
-        curr_tokens.extend(filtered_words) #ONLY add filtered words to curr_tokens list
+        words = text.split() #splits if there is a space
+        curr_tokens.extend(words) #ONLY add filtered words to curr_tokens list
     
     parsed_url = urlparse(url) #parse the url to get the hostname for organizing json files
     curr_subdomain = parsed_url.hostname #Get subdomain from the URL
@@ -65,8 +40,11 @@ def extract_tokens_from_page(content, url, folder_name="tokens_by_subdomain"):
     else:
         subdomain_tokens = [] #empty file
     
+
+    
     #append current tokens to existing tokens (could include duplicates)
-    subdomain_tokens.extend(curr_tokens)
+    subdomain_tokens[curr_subdomain] = subdomain_tokens.get(curr_subdomain, []) + curr_tokens
+
     
     #saves tokens to the file with good formatting
     with open(json_tokens_file_path, "w") as file:
@@ -91,6 +69,8 @@ def extract_next_links(url, resp):
         print(f"The error: {resp.error} occurred. The status of this error is {resp.status}")
         return list()
     
+    extract_text_from_page(resp.raw_response.content, resp.raw_response.url)
+
     # Parses the content and finds all of the other links in the text
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
 
