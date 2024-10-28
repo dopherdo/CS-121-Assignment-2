@@ -37,28 +37,32 @@ class Worker(Thread):
             
             # Check if the domain is currently being used
 
-            if domain in self.frontier.url_cooldowns:
-                elapsed_time = time.time() - self.frontier.url_cooldowns[domain]
+            if self.frontier.get_cooldown(domain):
+                elapsed_time = time.time() - self.frontier.get_cooldown(domain)
 
                 if elapsed_time < self.config.time_delay:
                     waiting_time = self.config.time_delay - elapsed_time
                     time.sleep(waiting_time)
-                    self.frontier.to_be_downloaded.add(tbd_url)
+                    self.frontier.to_be_downloaded.put(tbd_url)
                     continue
                     
 
             self.run_again = True
 
             # Put the latest time the domain has been requested
-            self.frontier.url_cooldowns[domain] = time.time()
+            self.frontier.update_url_cooldown(domain, time.time())
             
             resp = download(tbd_url, self.config, self.logger)
             self.logger.info(
                 f"Downloaded {tbd_url}, status <{resp.status}>, "
                 f"using cache {self.config.cache_server}.")
+
+            # Scrape URLs and add them to frontier
             scraped_urls = scraper.scraper(tbd_url, resp)
             for scraped_url in scraped_urls:
                 self.frontier.add_url(scraped_url)
+
+                
             # Mark that the url is complete
             self.frontier.mark_url_complete(tbd_url)
             time.sleep(self.config.time_delay)

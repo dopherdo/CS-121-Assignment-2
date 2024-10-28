@@ -5,7 +5,34 @@ from bs4 import BeautifulSoup
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
-    return [link for link in links if is_valid(link)]
+    new_links = [link for link in links if is_valid(link)]
+    print(new_links)
+    return new_links
+
+def extract_tokens_from_page(content):
+    soup = BeautifulSoup(content, 'html.parser')
+    tokens = []
+
+    # Check which json to add our tokens to
+    if ".ics.uci.edu/" in url:
+        pass
+    if ".cs.uci.edu/" in url:
+        pass
+    if ".informatics.uci.edu/" in url:
+        pass
+    if ".stat.uci.edu//" in url:
+        pass
+    if "today.uci.edu/department/information_computer_sciences/" in url:
+        pass
+ 
+
+    # Extract all text content as tokens
+    for text in soup.stripped_strings:
+        tokens.extend(text.split().append(" "))  # Split into individual words (tokens)
+    
+    pass
+
+    
 
 def extract_next_links(url, resp):
     # Implementation required.
@@ -58,7 +85,7 @@ def is_valid(url):
     try:
         parsed = urlparse(url)
 
-        if parsed.scheme not in set(["http", "https", "today"]):
+        if parsed.scheme not in set(["http", "https"]):
             return False
         if not re.match(
             r'^(\w*.)(ics.uci.edu|cs.uci.edu|stat.uci.edu|today.uci.edu\/department\/information_computer_sciences)$',parsed.netloc):
@@ -71,7 +98,7 @@ def is_valid(url):
         # Check for repetitive path patterns
         if re.search(r'(\/\w+\/)\1{2,}', parsed.path):
             return False
-        if re.match(
+        return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
             + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
@@ -79,8 +106,7 @@ def is_valid(url):
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower()):
-            return False
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
 
 
     except TypeError:
