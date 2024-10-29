@@ -18,6 +18,7 @@ def scraper(url, resp, frontier):
     links = extract_next_links(soup, url, resp, frontier)
     new_links = [link for link in links if is_valid(link)]
     # new_links = [link for link in links if is_valid(link) and not is_duplicate(soup, frontier)]
+    frontier.increment_doc_count(len(new_links))
     return new_links
 
 

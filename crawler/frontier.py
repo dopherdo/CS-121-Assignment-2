@@ -17,10 +17,11 @@ class Frontier(object):
         self.url_cooldowns = {}
         self._lock = threading.Lock()
         #create lock functions
-        self.visited_urls = set()  # edan
-        self.seen_hashes = set() #caleb
-        self.doc_count = 0 #edan 
-        self.lsh = MinHashLSH(threshold=0.85, num_perm=128) #edan
+        self.visited_urls = set()
+        self.seen_hashes = set() 
+        # Set to 4 to get the four main links first
+        self.doc_count = 4
+        self.lsh = MinHashLSH(threshold=0.85, num_perm=128)
         self.longest_page = {}  # Holds URL:Length of longest page for report requirement #2
 
         
@@ -119,9 +120,9 @@ class Frontier(object):
             self.logger.info(f"Duplicate URL detected, skipping: {url}")
 
 
-    def increment_doc_count(self):
+    def increment_doc_count(self, amount):
         with self._lock:
-            self.doc_count += 1
+            self.doc_count += amount
 
     def lsh_insert(self, minhash):
         with self._lock:
