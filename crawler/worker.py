@@ -12,8 +12,6 @@ class Worker(Thread):
         self.logger = get_logger(f"Worker-{worker_id}", "Worker")
         self.config = config
         self.frontier = frontier
-        # Initialize a lock for thread-safe operations
-        # self.visited_lock = Lock()  # Lock for synchronizing access to the visited URLs
         # basic check for requests in scraper
         assert {getsource(scraper).find(req) for req in {"from requests import", "import requests"}} == {-1}, "Do not use requests in scraper.py"
         assert {getsource(scraper).find(req) for req in {"from urllib.request import", "import urllib.request"}} == {-1}, "Do not use urllib.request in scraper.py"
@@ -24,7 +22,7 @@ class Worker(Thread):
         while True:
             # Gets the url from the frontier
             tbd_url = self.frontier.get_tbd_url()
-            print(f"Opening {tbd_url}")
+            print(f"\nOpening {tbd_url}")
             # Only exit if it tries it twice and there are no more urls to expand on
             if not tbd_url and self.run_again:
                 time.sleep(5)
@@ -60,13 +58,13 @@ class Worker(Thread):
             # Scrape URLs and add them to frontier queue & visited_urls
             scraped_urls = scraper.scraper(tbd_url, resp, self.frontier)
             for scraped_url in scraped_urls:
-               # with self.visited_lock: # use when multithreading 
-                if scraped_url in self.frontier.visited_urls:
+                if self.frontier.in_visited_urls(scraped_url):
                     continue
-                self.frontier.visited_urls.add(scraped_url)
+                self.frontier.add_visited_url(scraped_url)
                 self.frontier.add_url(scraped_url)
 
             print(f"Finishing {tbd_url}")
+            print(f"Remaining URLs: {list(self.frontier.to_be_downloaded.queue)}")
             # Mark that the url is complete
             self.frontier.mark_url_complete(tbd_url)
             time.sleep(self.config.time_delay)

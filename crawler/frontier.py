@@ -16,10 +16,12 @@ class Frontier(object):
         self.to_be_downloaded = queue.Queue()
         self.url_cooldowns = {}
         self._lock = threading.Lock()
-        self.visited_urls = set()  # Set to track visited URLs
-        self.seen_hashes = set()
-        self.lsh = MinHashLSH(threshold=0.85, num_perm=128)
-        self.doc_count = 0
+        #create lock functions
+        self.visited_urls = set()  # edan
+        self.seen_hashes = set() #caleb
+        self.doc_count = 0 #edan 
+        self.lsh = MinHashLSH(threshold=0.85, num_perm=128) #edan
+        self.longest_page = {}  # Holds URL:Length of longest page for report requirement #2
 
         
         if not os.path.exists(self.config.save_file) and not restart:
@@ -92,3 +94,56 @@ class Frontier(object):
     def update_url_cooldown(self, url, cooldown):
         with self._lock:
             self.url_cooldowns[url] = cooldown
+
+    def add_potential_longest_page(self, url, length):
+        '''
+        Everytime we finish parsing a page, send the length to Frontier 
+        '''
+        with self._lock:
+            if len(self.longest_page) == 0: # First page to be appended to longest_page
+                self.longest_page[url] = length
+            elif len(self.longest_page) > 1:    # Error of having more than 1 item in our dictionary holding longest
+                raise ValueError("longest_page dictionary should only contain one key-value pair.")
+            elif length > next(iter(self.longest_page.values())):  # Check if this new page length is longer than the max rn
+                self.longest_page.clear()
+                self.longest_page[url] = length
+    
+    def process_url(self, url):
+        '''
+        Process a URL if it hasn't been seen before.
+        '''
+        urlhash = get_urlhash(url)  # Assume this generates a unique hash for the URL
+        if not self.check_duplicate_hash(urlhash):
+            self.add_seen_hashes(urlhash)
+        else:
+            self.logger.info(f"Duplicate URL detected, skipping: {url}")
+
+
+    def increment_doc_count(self):
+        with self._lock:
+            self.doc_count += 1
+
+    def lsh_insert(self, minhash):
+        with self._lock:
+            self.lsh.insert(f"doc_{self.doc_count}", minhash)
+
+    def add_seen_hashes(self, hash_value):
+        with self._lock:
+            if (hash_value) not in self.seen_hashes:
+                self.seen_hashes.add(hash_value)
+                
+    def check_duplicate_hash(self, hash_value):
+        with self._lock:
+            return hash_value in self.seen_hashes
+
+    def add_visited_url(self, url):
+        with self._lock:
+            self.visited_urls.add(url)
+
+    def in_visited_urls(self, url):
+        with self._lock:
+            return url in self.visited_urls
+        
+    def get_to_be_downloaded_urls(self):
+        with self._lock:
+            return self.to_be_downloaded

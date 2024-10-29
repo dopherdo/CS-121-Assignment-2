@@ -13,25 +13,26 @@ def scraper(url, resp, frontier):
     
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
     links = extract_next_links(soup, url, resp)
-    new_links = [link for link in links if is_valid(link) and not is_duplicate(soup, frontier)]
+    new_links = [link for link in links if is_valid(link)]
+    # new_links = [link for link in links if is_valid(link) and not is_duplicate(soup, frontier)]
     return new_links
 
 
 def extract_text_from_page(soup, url, folder_name="tokens_by_subdomain"): #content is a string
     curr_tokens = [] # TODO: SHOULD BE A JSON INSTEAD
-  
-    # TODO: check to see if file (check subdomain) is already there
 
-    # Extract all text content as tokens and filter out stopwords
+    # Extract all text content
     for text in soup.stripped_strings: 
-        # Split into words and filter out stopwords
+        # Split into words
         words = text.split() #splits if there is a space
+        word_count = len(words)
         curr_tokens.extend(words) #ONLY add filtered words to curr_tokens list
     
     parsed_url = urlparse(url) #parse the url to get the hostname for organizing json files
     curr_subdomain = parsed_url.hostname #Get subdomain from the URL
     
     os.makedirs(folder_name, exist_ok=True) #ensure the token folder exists
+
 
     #defines the path to the json file
     json_tokens_file_path = os.path.join(folder_name, f"{curr_subdomain}.json")
@@ -96,6 +97,7 @@ def is_valid(url):
 
     # Add Functionality to check if the URL contains one of the 5 valid domains
         # use VALID_URLS
+    #Got 600-608 errors here
     invalid_domains = {"mse.ics.uci.edu, tippers.ics.uci.edu, mhcis.ics.uci.edu"}
     try:
         parsed = urlparse(url)
@@ -108,7 +110,7 @@ def is_valid(url):
             return False
 
         if not re.match(
-            r'^(\w*.)(ics.uci.edu|cs.uci.edu|stat.uci.edu|today.uci.edu\/department\/information_computer_sciences)$',parsed.netloc):
+            r'^(\w*.)(ics.uci.edu|cs.uci.edu|stat.uci.edu|informatics.uci.edu|today.uci.edu\/department\/information_computer_sciences)$',parsed.netloc):
             return False
         
         disallowed_keywords = ["?share=", "pdf", "redirect", "#comment", "#respond", "#comments"]
@@ -139,10 +141,9 @@ def is_duplicate(soup, frontier, threshold=0.85, perms=128):
     content = str(soup)
     # Generate a SHA-256 hash of the content
     content_hash = hashlib.sha256(content.encode()).hexdigest()
-    
     # Check for duplicate by verifying if hash is in `seen_hashes`
-    if content_hash in frontier.seen_hashes:
-        return True  # Duplicate content
+    if frontier.check_duplicate_hash(content_hash):
+        return True # Duplicate content
     
     # Get clean text
     text = soup.get_text(separator=' ', strip=True).lower()
@@ -163,7 +164,7 @@ def is_duplicate(soup, frontier, threshold=0.85, perms=128):
         return True
     
     # If no duplicates found, add this document to the indexes
-    frontier.seen_hashes.add(content_hash)
-    frontier.lsh.insert(f"doc_{frontier.doc_count}", minhash)
-    frontier.doc_count += 1
+    frontier.add_seen_hashes(content_hash)
+    frontier.lsh_insert(minhash)
+    frontier.increment_doc_count()
     return False
