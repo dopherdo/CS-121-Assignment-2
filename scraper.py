@@ -10,6 +10,9 @@ import hashlib
 import json
 
 def scraper(url, resp, frontier):
+    if resp.status != 200:
+        print(f"The error: {resp.error} occurred. The status of this error is {resp.status}")
+        return list()
     
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
     links = extract_next_links(soup, url, resp)
@@ -98,7 +101,7 @@ def is_valid(url):
     # Add Functionality to check if the URL contains one of the 5 valid domains
         # use VALID_URLS
     #Got 600-608 errors here
-    invalid_domains = {"mse.ics.uci.edu, tippers.ics.uci.edu, mhcis.ics.uci.edu"}
+    invalid_domains = {"mse.ics.uci.edu, tippers.ics.uci.edu, mhcis.ics.uci.edu,"}
     try:
         parsed = urlparse(url)
 

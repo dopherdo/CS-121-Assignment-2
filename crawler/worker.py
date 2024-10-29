@@ -64,7 +64,6 @@ class Worker(Thread):
                 self.frontier.add_url(scraped_url)
 
             print(f"Finishing {tbd_url}")
-            print(f"Remaining URLs: {list(self.frontier.to_be_downloaded.queue)}")
             # Mark that the url is complete
             self.frontier.mark_url_complete(tbd_url)
             time.sleep(self.config.time_delay)
