@@ -25,8 +25,7 @@ class Frontier(object):
         self.lsh = MinHashLSH(threshold=0.85, num_perm=128)
         self.longest_page = {}  # Holds URL:Length of longest page for report requirement #2
 
-        os.makedirs("CS-121-Assignment-2", exist_ok=True) #ensure the token folder exists
-        self.stats_file_path = os.path.join("CS-121-Assignment-2", "frontier_data.json")
+        self.stats_file_path = "frontier_data.json"
 
         
         if not os.path.exists(self.config.save_file) and not restart:
