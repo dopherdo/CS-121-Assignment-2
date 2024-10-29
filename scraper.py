@@ -23,17 +23,27 @@ def scraper(url, resp, frontier):
 
 def extract_text_from_page(soup, url, frontier, folder_name="tokens_by_subdomain"): #content is a string
     curr_tokens = [] # TODO: SHOULD BE A JSON INSTEAD
-
+    word_count = 0
     # Extract all text content
     for text in soup.stripped_strings: 
         # Split into words
         words = text.split() #splits if there is a space
-        word_count = len(words)
+        word_count += len(words)
         curr_tokens.extend(words) #ONLY add filtered words to curr_tokens list
+
+    # Check if it is our longest page (highest word_count)
+    if word_count:
+        frontier.add_potential_longest_page(url, word_count)
+
+    # Avoid low information pages 
+    if word_count < 75:
+        return 
     
     parsed_url = urlparse(url) #parse the url to get the hostname for organizing json files
     curr_subdomain = parsed_url.hostname #Get subdomain from the URL
+    
 
+    
 
     #defines the path to the json file
     json_tokens_file_path = os.path.join(folder_name, f"{curr_subdomain}.json")
@@ -46,10 +56,17 @@ def extract_text_from_page(soup, url, frontier, folder_name="tokens_by_subdomain
                 existing_tokens = json.load(file)
                 # Add current tokens to existing ones
                 existing_tokens[curr_subdomain] = existing_tokens.get(curr_subdomain, []) + curr_tokens
-                tokens_to_save = existing_tokens
+                page_count = existing_tokens.get("page_count", 0) + 1
+                tokens_to_save = {
+                    "page_count": page_count,
+                    **{k: v for k, v in existing_tokens.items() if k != "page_count"}
+                }
         else:
             # Create new tokens dictionary if file doesn't exist
-            tokens_to_save = {curr_subdomain: curr_tokens}
+            tokens_to_save = {
+            "page_count": 1,
+            curr_subdomain: curr_tokens
+        }
         
         # Save tokens to file
         with open(json_tokens_file_path, "w") as file:
@@ -108,7 +125,6 @@ def is_valid(url):
         if parsed.scheme not in set(["http", "https"]):
             return False
 
-
         if parsed.netloc.lower() in invalid_domains:
             return False
 
@@ -116,10 +132,13 @@ def is_valid(url):
             r'^(\w*.)(ics.uci.edu|cs.uci.edu|stat.uci.edu|informatics.uci.edu|today.uci.edu\/department\/information_computer_sciences)$',parsed.netloc):
             return False
         
-        disallowed_keywords = ["filter","?share=", "pdf", "redirect", "#comment", "#respond", "#comments"]
+        disallowed_keywords = [".org","?idx=",".txt", ".odc", "?ical","?tribe__ecp_custom_",".ppsx","?rev=","?do=",".com","?date=","/calendar","?view=agenda","?calendar=","?tribe-bar-date","?filter","?share=", "pdf", "redirect", "#comment", "#respond", "#comments"]
         if any(keyword in url for keyword in disallowed_keywords):
             return False
         
+        if "uci.edu" not in url:
+            return False
+
         # Check for repetitive path patterns
         if re.search(r'(\/\w+\/)\1{2,}', parsed.path):
             return False

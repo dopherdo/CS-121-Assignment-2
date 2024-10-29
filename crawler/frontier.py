@@ -25,8 +25,8 @@ class Frontier(object):
         self.lsh = MinHashLSH(threshold=0.85, num_perm=128)
         self.longest_page = {}  # Holds URL:Length of longest page for report requirement #2
 
-        os.makedirs(folder_name, exist_ok=True) #ensure the token folder exists
-        self.stats_file_path = os.path.join(self.folder_name, "frontier_data.json")
+        os.makedirs("CS-121-Assignment-2", exist_ok=True) #ensure the token folder exists
+        self.stats_file_path = os.path.join("CS-121-Assignment-2", "frontier_data.json")
 
         
         if not os.path.exists(self.config.save_file) and not restart:
@@ -111,7 +111,7 @@ class Frontier(object):
                 if length > curr_length:
                     self.longest_page.clear()
                     self.longest_page[url] = length
-            self._save_data_to_file()
+        self._save_data_to_file()
     
     def _save_data_to_file(self):
         with self._lock:
@@ -119,7 +119,7 @@ class Frontier(object):
                 "doc_count": len(self.visited_urls),
                 "longest_page": self.longest_page
             }
-            with open(self.file_path, "w") as file:
+            with open(self.stats_file_path, "w") as file:
                 json.dump(data, file, indent=4)
 
     def process_url(self, url):

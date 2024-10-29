@@ -64,8 +64,6 @@ class Worker(Thread):
                 self.frontier.add_url(scraped_url)
 
             print(f"Finishing {tbd_url}")
-            print(f"Longest Page: {self.frontier.longest_page}")
-            print(f"Number of Unique Pages: {self.frontier.doc_count}")
 
             # Mark that the url is complete
             self.frontier.mark_url_complete(tbd_url)
