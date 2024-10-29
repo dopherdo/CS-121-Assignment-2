@@ -15,13 +15,13 @@ def scraper(url, resp, frontier):
         return list()
     
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
-    links = extract_next_links(soup, url, resp)
+    links = extract_next_links(soup, url, resp, frontier)
     new_links = [link for link in links if is_valid(link)]
     # new_links = [link for link in links if is_valid(link) and not is_duplicate(soup, frontier)]
     return new_links
 
 
-def extract_text_from_page(soup, url, folder_name="tokens_by_subdomain"): #content is a string
+def extract_text_from_page(soup, url, frontier, folder_name="tokens_by_subdomain"): #content is a string
     curr_tokens = [] # TODO: SHOULD BE A JSON INSTEAD
 
     # Extract all text content
@@ -40,24 +40,26 @@ def extract_text_from_page(soup, url, folder_name="tokens_by_subdomain"): #conte
     #defines the path to the json file
     json_tokens_file_path = os.path.join(folder_name, f"{curr_subdomain}.json")
 
-    #Checks if the json file for the subdomain exists already
-    if os.path.exists(json_tokens_file_path):
-        with open(json_tokens_file_path, "r") as file:
-            existing_tokens = json.load(file)
-            # Add current tokens to existing ones
-            existing_tokens[curr_subdomain] = existing_tokens.get(curr_subdomain, []) + curr_tokens
-            tokens_to_save = existing_tokens
-    else:
-        # Create new tokens dictionary if file doesn't exist
-        tokens_to_save = {curr_subdomain: curr_tokens}
-    
-    # Save tokens to file
-    with open(json_tokens_file_path, "w") as file:
-        json.dump(tokens_to_save, file, indent=4)
+
+    with frontier._lock:
+        #Checks if the json file for the subdomain exists already
+        if os.path.exists(json_tokens_file_path):
+            with open(json_tokens_file_path, "r") as file:
+                existing_tokens = json.load(file)
+                # Add current tokens to existing ones
+                existing_tokens[curr_subdomain] = existing_tokens.get(curr_subdomain, []) + curr_tokens
+                tokens_to_save = existing_tokens
+        else:
+            # Create new tokens dictionary if file doesn't exist
+            tokens_to_save = {curr_subdomain: curr_tokens}
+        
+        # Save tokens to file
+        with open(json_tokens_file_path, "w") as file:
+            json.dump(tokens_to_save, file, indent=4)
 
     
 
-def extract_next_links(soup, url, resp):
+def extract_next_links(soup, url, resp, frontier):
     # Implementation required.
     # url: the URL that was used to get the page
     # resp.url: the actual url of the page
@@ -73,7 +75,7 @@ def extract_next_links(soup, url, resp):
         print(f"The error: {resp.error} occurred. The status of this error is {resp.status}")
         return list()
     
-    extract_text_from_page(soup, resp.raw_response.url)
+    extract_text_from_page(soup, resp.raw_response.url, frontier)
 
     lists_to_check = []
 
