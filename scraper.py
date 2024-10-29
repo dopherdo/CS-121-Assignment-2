@@ -18,7 +18,6 @@ def scraper(url, resp, frontier):
     links = extract_next_links(soup, url, resp, frontier)
     new_links = [link for link in links if is_valid(link)]
     # new_links = [link for link in links if is_valid(link) and not is_duplicate(soup, frontier)]
-    frontier.increment_doc_count(len(new_links))
     return new_links
 
 
@@ -34,8 +33,6 @@ def extract_text_from_page(soup, url, frontier, folder_name="tokens_by_subdomain
     
     parsed_url = urlparse(url) #parse the url to get the hostname for organizing json files
     curr_subdomain = parsed_url.hostname #Get subdomain from the URL
-    
-    os.makedirs(folder_name, exist_ok=True) #ensure the token folder exists
 
 
     #defines the path to the json file
@@ -104,7 +101,7 @@ def is_valid(url):
     # Add Functionality to check if the URL contains one of the 5 valid domains
         # use VALID_URLS
     #Got 600-608 errors here
-    invalid_domains = {"mse.ics.uci.edu, tippers.ics.uci.edu, mhcis.ics.uci.edu,"}
+    invalid_domains = {"mse.ics.uci.edu", "tippers.ics.uci.edu", "mhcis.ics.uci.edu"}
     try:
         parsed = urlparse(url)
 
@@ -119,7 +116,7 @@ def is_valid(url):
             r'^(\w*.)(ics.uci.edu|cs.uci.edu|stat.uci.edu|informatics.uci.edu|today.uci.edu\/department\/information_computer_sciences)$',parsed.netloc):
             return False
         
-        disallowed_keywords = ["?share=", "pdf", "redirect", "#comment", "#respond", "#comments"]
+        disallowed_keywords = ["filter","?share=", "pdf", "redirect", "#comment", "#respond", "#comments"]
         if any(keyword in url for keyword in disallowed_keywords):
             return False
         
@@ -172,5 +169,6 @@ def is_duplicate(soup, frontier, threshold=0.85, perms=128):
     # If no duplicates found, add this document to the indexes
     frontier.add_seen_hashes(content_hash)
     frontier.lsh_insert(minhash)
-    frontier.increment_doc_count()
+    #frontier.increment_doc_count()
     return False
+

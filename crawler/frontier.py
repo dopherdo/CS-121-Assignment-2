@@ -7,10 +7,11 @@ import queue
 from utils import get_logger, get_urlhash, normalize
 from scraper import is_valid
 from datasketch import MinHash, MinHashLSH
+import json
 
 
 class Frontier(object):
-    def __init__(self, config, restart):
+    def __init__(self, config, restart, folder_name="tokens_by_subdomain"):
         self.logger = get_logger("FRONTIER")
         self.config = config
         self.to_be_downloaded = queue.Queue()
@@ -23,6 +24,9 @@ class Frontier(object):
         self.doc_count = 4
         self.lsh = MinHashLSH(threshold=0.85, num_perm=128)
         self.longest_page = {}  # Holds URL:Length of longest page for report requirement #2
+
+        os.makedirs(folder_name, exist_ok=True) #ensure the token folder exists
+        self.stats_file_path = os.path.join(self.folder_name, "frontier_data.json")
 
         
         if not os.path.exists(self.config.save_file) and not restart:
@@ -97,18 +101,27 @@ class Frontier(object):
             self.url_cooldowns[url] = cooldown
 
     def add_potential_longest_page(self, url, length):
-        '''
-        Everytime we finish parsing a page, send the length to Frontier 
-        '''
         with self._lock:
             if len(self.longest_page) == 0: # First page to be appended to longest_page
                 self.longest_page[url] = length
             elif len(self.longest_page) > 1:    # Error of having more than 1 item in our dictionary holding longest
                 raise ValueError("longest_page dictionary should only contain one key-value pair.")
-            elif length > next(iter(self.longest_page.values())):  # Check if this new page length is longer than the max rn
-                self.longest_page.clear()
-                self.longest_page[url] = length
+            else:
+                curr_length = next(iter(self.longest_page.values())) # Check if this new page length is longer than the max rn
+                if length > curr_length:
+                    self.longest_page.clear()
+                    self.longest_page[url] = length
+            self._save_data_to_file()
     
+    def _save_data_to_file(self):
+        with self._lock:
+            data = {
+                "doc_count": len(self.visited_urls),
+                "longest_page": self.longest_page
+            }
+            with open(self.file_path, "w") as file:
+                json.dump(data, file, indent=4)
+
     def process_url(self, url):
         '''
         Process a URL if it hasn't been seen before.
@@ -118,11 +131,6 @@ class Frontier(object):
             self.add_seen_hashes(urlhash)
         else:
             self.logger.info(f"Duplicate URL detected, skipping: {url}")
-
-
-    def increment_doc_count(self, amount):
-        with self._lock:
-            self.doc_count += amount
 
     def lsh_insert(self, minhash):
         with self._lock:
