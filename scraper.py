@@ -132,7 +132,7 @@ def is_valid(url):
             r'^(\w*.)(ics.uci.edu|cs.uci.edu|stat.uci.edu|informatics.uci.edu|today.uci.edu\/department\/information_computer_sciences)$',parsed.netloc):
             return False
         
-        disallowed_keywords = [".diff", ".org","?idx=",".txt", ".odc", "?ical","?tribe__ecp_custom_",".ppsx","?rev=","?do=",".com","?date=","/calendar","?view=agenda","?calendar=","?tribe-bar-date","?filter","?share=", "pdf", "redirect", "#comment", "#respond", "#comments"]
+        disallowed_keywords = [".scm", "?version", "?view", "?format", "gitlab", "?from", "-/tree", ".ps", "?action=", "-/compare", "-/commit", ".wmv", ".mov", ".avi", ".mpeg", ".mpg", ".tar.gz", ".xlsx", ".rar", ".zip", ".docx", ".wav", ".mp3", ".mp4", ".gif", ".png", ".jpeg", ".jpg", ".diff", ".org","?idx=",".txt", ".odc", "?ical","?tribe__ecp_custom_",".ppsx","?rev=","?do=",".com","?date=","/calendar","?view=agenda","?calendar=","?tribe-bar-date","?filter","?share=", "pdf", "redirect", "#comment", "#respond", "#comments"]
         if any(keyword in url for keyword in disallowed_keywords):
             return False
         
