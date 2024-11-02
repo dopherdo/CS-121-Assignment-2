@@ -1,7 +1,6 @@
 ABOUT
 -------------------------
-This is the base implementation of a full crawler that uses a spacetime
-cache server to receive requests.
+Our crawlers scans the web using multithreading for efficiency. The crawler grabs URLs, avoiding traps with exact/near duplicate detection using SimHash (Similarity Hashing). The raw HTML content then processes the HTML with BeautifulSoup and tokenizes the text into JSON files. These JSON files can then be converted into useful information sorted based on relevancy and popularity.
 
 CONFIGURATION
 -------------------------
