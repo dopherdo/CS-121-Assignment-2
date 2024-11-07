@@ -21,7 +21,7 @@ class Frontier(object):
         self.visited_urls = set()
         self.seen_hashes = set() 
         # Set to 4 to get the four main links first
-        self.doc_count = 4
+        self.doc_count = 0
         self.lsh = MinHashLSH(threshold=0.85, num_perm=128)
         self.longest_page = {}  # Holds URL:Length of longest page for report requirement #2
 
@@ -134,11 +134,18 @@ class Frontier(object):
     def lsh_insert(self, minhash):
         with self._lock:
             self.lsh.insert(f"doc_{self.doc_count}", minhash)
+            self.doc_count += 1 # incerment the doc count (Eg: doc_1 , doc2, etc)
+
 
     def add_seen_hashes(self, hash_value):
         with self._lock:
             if (hash_value) not in self.seen_hashes:
                 self.seen_hashes.add(hash_value)
+    
+    def similar_docs(self, minhash):
+        with self._lock:
+            self.lsh.query(minhash)
+
                 
     def check_duplicate_hash(self, hash_value):
         with self._lock:

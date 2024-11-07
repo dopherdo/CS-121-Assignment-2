@@ -37,14 +37,14 @@ def create_report(json_files):
     # TODO: TOKENIZE HERE
 
 
-    for json_file in json_files:
-        with open(json_file, 'r') as f:
+    for json_file in json_files: # -1 json file for each subdomain
+        with open(json_file, 'r') as f: 
             json_data = json.load(f)
             word_count = 0
 
             # Update word frequency manually
             subdomain_name = next(iter(json_data))
-            tokens = json_data[subdomain_name]
+            tokens = json_data[subdomain_name] #gets the number of items in tokens
             # counts the number of words
             myBool = True
             word_count = len(tokens)
@@ -91,10 +91,19 @@ def create_report(json_files):
     for subdomain, count in sorted(subdomain_report.items()):
         print(f"{subdomain}, {count}")
 
+
+
+
 def main():
-    # Replace this with the actual path to your JSON files
-    json_files = [f for f in os.listdir('"tokens_by_subdomain"') if f.endswith('.json')]
-    create_report(json_files)
+    # Returns a list of all the files in the tokens_by_subdomain folder
+    # json_files = [f for f in os.listdir("tokens_by_subdomain") if f.endswith('.json')]
+
+    json_files =
+    print(json_files)
+    # REMOVE THIS LATER !!! temp testing replacement
+    # json_files = "tokens_by_subdomain" #replace
+
+    # create_report(json_files)
 
 if __name__ == "__main__":
     main()

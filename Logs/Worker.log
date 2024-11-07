@@ -101,3 +101,5 @@
 2024-10-31 17:09:28,174 - Worker-3 - ERROR - Spacetime Response error <Response [200]> with url https://gitlab.ics.uci.edu/joshug4/jasmin/-/commit/0bbbd98353beb26b0ec507c2bfb7204b7d7fb25f?action=show&controller=projects%2Fcommit&id=0bbbd98353beb26b0ec507c2bfb7204b7d7fb25f&namespace_id=joshug4&project_id=jasmin&w=1.
 2024-10-31 17:12:25,086 - Worker-7 - ERROR - Spacetime Response error <Response [200]> with url https://gitlab.ics.uci.edu/joshug4/jasmin/-/commit/44ad4189832eb1d9d0f13d13488070496a55f2b4?action=show&controller=projects%2Fcommit&id=44ad4189832eb1d9d0f13d13488070496a55f2b4&namespace_id=joshug4&project_id=jasmin&w=1.
 2024-10-31 17:22:49,137 - Worker-2 - ERROR - Spacetime Response error <Response [200]> with url https://gitlab.ics.uci.edu/nathanp3/Sudoku_Student/-/compare?from=master&to=fbe324a4c027c77d60aff7093b6f7e98e57c7fca.
+2024-10-31 19:48:21,025 - Worker-0 - ERROR - Spacetime Response error <Response [200]> with url https://isg.ics.uci.edu/events/2020-10-16/?outlook-ical=1.
+2024-10-31 20:05:57,266 - Worker-2 - ERROR - Spacetime Response error <Response [200]> with url https://isg.ics.uci.edu/events/2022-09-07/?outlook-ical=1.

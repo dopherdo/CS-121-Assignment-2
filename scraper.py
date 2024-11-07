@@ -15,6 +15,8 @@ def scraper(url, resp, frontier):
         return list()
     
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
+    if is_duplicate(url, soup, frontier):
+        return list()
     links = extract_next_links(soup, url, resp, frontier)
     new_links = [link for link in links if is_valid(link)]
     # new_links = [link for link in links if is_valid(link) and not is_duplicate(soup, frontier)]
@@ -36,7 +38,10 @@ def extract_text_from_page(soup, url, frontier, folder_name="tokens_by_subdomain
         frontier.add_potential_longest_page(url, word_count)
 
     # Avoid low information pages 
-    if word_count < 75:
+    if word_count < 100:
+        print()
+        print(f"LOW DOCUMENT page! {url}")
+        print()
         return 
     
     parsed_url = urlparse(url) #parse the url to get the hostname for organizing json files
@@ -90,7 +95,7 @@ def extract_next_links(soup, url, resp, frontier):
         print(f"The error: {resp.error} occurred. The status of this error is {resp.status}")
         return list()
     
-    extract_text_from_page(soup, resp.raw_response.url, frontier)
+    extract_text_from_page(soup, resp.url, frontier)
 
     lists_to_check = []
 
@@ -132,7 +137,7 @@ def is_valid(url):
             r'^(\w*.)(ics.uci.edu|cs.uci.edu|stat.uci.edu|informatics.uci.edu|today.uci.edu\/department\/information_computer_sciences)$',parsed.netloc):
             return False
         
-        disallowed_keywords = [".scm", "?version", "?view", "?format", "gitlab", "?from", "-/tree", ".ps", "?action=", "-/compare", "-/commit", ".wmv", ".mov", ".avi", ".mpeg", ".mpg", ".tar.gz", ".xlsx", ".rar", ".zip", ".docx", ".wav", ".mp3", ".mp4", ".gif", ".png", ".jpeg", ".jpg", ".diff", ".org","?idx=",".txt", ".odc", "?ical","?tribe__ecp_custom_",".ppsx","?rev=","?do=",".com","?date=","/calendar","?view=agenda","?calendar=","?tribe-bar-date","?filter","?share=", "pdf", "redirect", "#comment", "#respond", "#comments"]
+        disallowed_keywords = ["pps", "github", "date", "ical", "outlook", "event", "music", "media", "video", "account", "unsubscribe", "login", "lang", "mailto", "redirect", "attachment", "print", "version", "view", "format", "gitlab", "from", "-/tree", "action", "-/compare", "-/commit", ".tar.gz", ".xlsx", ".rar", ".zip", ".docx", ".wav", ".mp3", ".mp4", ".gif", ".png", ".jpeg", ".jpg", ".diff", ".org","idx",".txt", ".odc", "ical","?tribe__ecp_custom_",".ppsx","?rev=","?do=",".com","date","calendar","?view=agenda","?calendar=","?tribe-bar-date","filter","share", "pdf", "redirect", "#comment", "#respond", "#comments"]
         if any(keyword in url for keyword in disallowed_keywords):
             return False
         
@@ -143,12 +148,17 @@ def is_valid(url):
         if re.search(r'(\/\w+\/)\1{2,}', parsed.path):
             return False
         return not re.match(
+            
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
             + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
             + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1"
+            + r"|ogg|ogv|ram|m4v|scm"
+            + r"|rtf|epub|thmx|mso|arff"
+            + r"|bin|msi|jar|exe|dll|ps"
+            + r"|bz2|7z|dmg|iso|tgz|gz|wmv"
             + r"|thmx|mso|arff|rtf|jar|csv"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
 
@@ -159,7 +169,7 @@ def is_valid(url):
     # https://github.com/Araz-cs/spacetime-crawler4py121/blob/master/scraper.py
 
 
-def is_duplicate(soup, frontier, threshold=0.85, perms=128):
+def is_duplicate(url, soup, frontier, threshold=0.85, perms=128):
     content = str(soup)
     # Generate a SHA-256 hash of the content
     content_hash = hashlib.sha256(content.encode()).hexdigest()
@@ -179,15 +189,19 @@ def is_duplicate(soup, frontier, threshold=0.85, perms=128):
         minhash.update(shingle.encode('utf-8'))
     
     # Check for near duplicates using `query`
-    similar_docs = frontier.lsh.query(minhash)
+    similar_docs = frontier.similar_docs(minhash)
     
     # If similar documents are found, consider them duplicates
     if similar_docs:
+        print()
+        print(f"DUPLICATE page: {url}")
+        print(f"ORIGINAL page: {similar_docs[0]}")
+        print(f"-------------------------")
         return True
     
-    # If no duplicates found, add this document to the indexes
+
+        print("-------------------------")    # If no duplicates found, add this document to the indexes
     frontier.add_seen_hashes(content_hash)
     frontier.lsh_insert(minhash)
-    #frontier.increment_doc_count()
     return False
 
