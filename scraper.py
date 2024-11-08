@@ -24,6 +24,10 @@ def scraper(url, resp, frontier):
 
 
 def extract_text_from_page(soup, url, frontier, folder_name="tokens_by_subdomain"): #content is a string
+    # Remove script and style elements from the HTML
+    for element in soup(['script', 'style']):
+        element.decompose()
+
     curr_tokens = [] # TODO: SHOULD BE A JSON INSTEAD
     word_count = 0
     # Extract all text content
@@ -35,7 +39,7 @@ def extract_text_from_page(soup, url, frontier, folder_name="tokens_by_subdomain
 
     # Check if it is our longest page (highest word_count)
     if word_count:
-        frontier.add_potential_longest_page(url, word_count)
+        frontier.add_potential_longest_page(url, word_count, curr_tokens)
 
     # Avoid low information pages 
     if word_count < 100:

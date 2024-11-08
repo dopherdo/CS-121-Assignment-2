@@ -99,7 +99,7 @@ class Frontier(object):
         with self._lock:
             self.url_cooldowns[url] = cooldown
 
-    def add_potential_longest_page(self, url, length):
+    def add_potential_longest_page(self, url, length, tokens):
         with self._lock:
             if len(self.longest_page) == 0: # First page to be appended to longest_page
                 self.longest_page[url] = length
@@ -110,13 +110,14 @@ class Frontier(object):
                 if length > curr_length:
                     self.longest_page.clear()
                     self.longest_page[url] = length
-        self._save_data_to_file()
+        self._save_data_to_file(tokens)
     
-    def _save_data_to_file(self):
+    def _save_data_to_file(self, tokens):
         with self._lock:
             data = {
                 "doc_count": len(self.visited_urls),
-                "longest_page": self.longest_page
+                "longest_page": self.longest_page,
+                "words": tokens
             }
             with open(self.stats_file_path, "w") as file:
                 json.dump(data, file, indent=4)
