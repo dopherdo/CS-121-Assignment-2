@@ -5,6 +5,7 @@ from datasketch import MinHash, MinHashLSH
 from bs4 import BeautifulSoup
 import os
 import hashlib
+import unicodedata
 
 
 import json
@@ -14,7 +15,20 @@ def scraper(url, resp, frontier):
         print(f"The error: {resp.error} occurred. The status of this error is {resp.status}")
         return list()
     
-    soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
+      # Check encoding and set default to 'utf-8'
+    content_type = resp.raw_response.headers.get('content-type', '').lower()
+    encoding = 'utf-8'  # Default to UTF-8 if charset is not specified
+    if 'charset=' in content_type:
+        encoding = content_type.split('charset=')[-1]
+
+    try:
+        # Decode and re-encode to ensure UTF-8
+        content = resp.raw_response.content.decode(encoding, errors='ignore').encode('utf-8')
+    except LookupError:
+        print(f"Warning: Unknown encoding '{encoding}' for URL {url}. Defaulting to UTF-8.")
+        content = resp.raw_response.content.decode('utf-8', errors='ignore')
+        
+    soup = BeautifulSoup(content, 'html.parser')
     if is_duplicate(url, soup, frontier):
         return list()
     links = extract_next_links(soup, url, resp, frontier)
@@ -30,12 +44,45 @@ def extract_text_from_page(soup, url, frontier, folder_name="tokens_by_subdomain
 
     curr_tokens = [] # TODO: SHOULD BE A JSON INSTEAD
     word_count = 0
-    # Extract all text content
-    for text in soup.stripped_strings: 
+    # Function to clean and normalize text
+    def clean_text(text):
+        # Normalize Unicode characters (NFKD decomposes characters into their basic components)
+        normalized_text = unicodedata.normalize("NFKD", text)
+
+        # Remove control characters (non-printable characters)
+        cleaned_text = re.sub(r'[\x00-\x1F\x7F]', '', normalized_text)
+
+        # Decode any unicode escape sequences and handle UTF-8 double encoding
+        try:
+            # First attempt: decode from UTF-8 and escape sequences (unicode_escape)
+            cleaned_text = bytes(cleaned_text, "utf-8").decode("unicode_escape")
+        except UnicodeDecodeError:
+            # If above fails (e.g., due to double encoding), try re-decoding from byte sequence
+            cleaned_text = cleaned_text.encode('utf-8').decode('utf-8')
+
+        return cleaned_text
+
+    # Function to check if a word contains valid, readable characters
+    def is_valid_word(word):
+        # Ignore words that contain unwanted characters (e.g., unicode escape sequences, non-ASCII)
+        if re.search(r'[^\x00-\x7F]+', word):  # This matches any non-ASCII character
+            return False
+        return True
+
+    # Extract all visible text content
+    for text in soup.stripped_strings:
+        # Clean and normalize the text
+        cleaned_text = clean_text(text)
+
         # Split into words
-        words = text.split() #splits if there is a space
-        word_count += len(words)
-        curr_tokens.extend(words) #ONLY add filtered words to curr_tokens list
+        words = cleaned_text.split()  # Splits if there is a space
+
+        # Filter valid words
+        valid_words = [word for word in words if is_valid_word(word)]
+        word_count += len(valid_words)
+
+        # Add valid words to curr_tokens list
+        curr_tokens.extend(valid_words)  # Only add filtered words to curr_tokens list
 
     # Check if it is our longest page (highest word_count)
     if word_count:
@@ -141,7 +188,7 @@ def is_valid(url):
             r'^(\w*.)(ics.uci.edu|cs.uci.edu|stat.uci.edu|informatics.uci.edu|today.uci.edu\/department\/information_computer_sciences)$',parsed.netloc):
             return False
         
-        disallowed_keywords = ["pps", "github", "date", "ical", "outlook", "event", "music", "media", "video", "account", "unsubscribe", "login", "lang", "mailto", "redirect", "attachment", "print", "version", "view", "format", "gitlab", "from", "-/tree", "action", "-/compare", "-/commit", ".tar.gz", ".xlsx", ".rar", ".zip", ".docx", ".wav", ".mp3", ".mp4", ".gif", ".png", ".jpeg", ".jpg", ".diff", ".org","idx",".txt", ".odc", "ical","?tribe__ecp_custom_",".ppsx","?rev=","?do=",".com","date","calendar","?view=agenda","?calendar=","?tribe-bar-date","filter","share", "pdf", "redirect", "#comment", "#respond", "#comments"]
+        disallowed_keywords = ["Image", "image", "pps", "github", "date", "ical", "outlook", "event", "music", "media", "video", "account", "unsubscribe", "login", "lang", "mailto", "redirect", "attachment", "print", "version", "view", "format", "gitlab", "from", "-/tree", "action", "-/compare", "-/commit", ".tar.gz", ".xlsx", ".rar", ".zip", ".docx", ".wav", ".mp3", ".mp4", ".gif", ".png", ".jpeg", ".jpg", ".diff", ".org","idx",".txt", ".odc", "ical","?tribe__ecp_custom_",".ppsx","?rev=","?do=",".com","date","calendar","?view=agenda","?calendar=","?tribe-bar-date","filter","share", "pdf", "redirect", "#comment", "#respond", "#comments", "img"]
         if any(keyword in url for keyword in disallowed_keywords):
             return False
         
