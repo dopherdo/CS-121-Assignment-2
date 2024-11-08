@@ -1,4 +1,3 @@
-#CHATGPT
 
 import json
 import os
@@ -27,83 +26,78 @@ stopwords = {
     "you've", "your", "yours", "yourself", "yourselves"
     }
 
+
+def tokenize(tokens):
+    print("Tokenizing")
+    tokenized_words = []
+    word_counter = {}  # Manually count words using a dictionary
+    for word in tokens: #basically ensures word is a word and eliminates stopwords
+        word = word.lower()
+        cleaned_word = ''.join(char for char in word if char.isalnum())
+        if cleaned_word and cleaned_word not in stopwords:
+            tokenized_words.append(cleaned_word)
+    for word in tokenized_words:
+        if word in word_counter:
+            word_counter[word] += 1  # Increment count if word is already in dictionary
+        else:
+            word_counter[word] = 1
+    
+    return word_counter # will have all words not in stopwords
+
+
 def create_report(json_files):
     longest_page_info = ("", 0)  # (filename, word count)
-    word_counter = {}  # Manually count words using a dictionary
     subdomain_counter = {}  # Regular dictionary to count unique URLs per subdomain
-
-
-
-    # TODO: TOKENIZE HERE
-
+    
 
     for json_file in json_files: # -1 json file for each subdomain
-        with open(json_file, 'r') as f: 
+        file_path = os.path.join("tokens_by_subdomain", json_file)  # Full path to the file
+        with open(file_path, 'r') as f: 
             json_data = json.load(f)
             word_count = 0
+            
+            keys = list(json_data.keys())  # Get all keys as a list
+            subdomain_name = keys[1]  # Access the second key
+            myData = json_data[subdomain_name] #gets the data for tokens
 
-            # Update word frequency manually
-            subdomain_name = next(iter(json_data))
-            tokens = json_data[subdomain_name] #gets the number of items in tokens
-            # counts the number of words
-            myBool = True
-            word_count = len(tokens)
-            for word in tokens:
-                word = word.lower()  # Convert to lower case for case insensitivity
-                for char in word:
-                    if not char.isalnum():
-                        myBool = False
-                        break
-                if myBool == False:
-                    continue
-                            
-                if word not in stopwords:
-                    if word in word_counter:
-                        word_counter[word] += 1
-                    else:
-                        word_counter[word] = 1
+            
+            tokenized_words = tokenize(myData) # Dictionary of word:frequency
+            word_count = len(tokenized_words) # counts the number of words
+            print(tokenized_words)
 
             # Check for the longest page for the report
             if word_count > longest_page_info[1]:
                 longest_page_info = (json_file, word_count)
 
             # Increment the count for the subdomain
-                if subdomain in subdomain_counter:
-                    subdomain_counter[subdomain] += 1  # Increment if exists
+                if subdomain_name in subdomain_counter:
+                    subdomain_counter[subdomain_name] += 1  # Increment if exists
                 else:
-                    subdomain_counter[subdomain] = 1  # Start count if new
+                    subdomain_counter[subdomain_name] = 1  # Start count if new
 
-    # Prepare the report results
+
+    # Longest Page
     longest_page_filename, longest_page_word_count = longest_page_info
-    
-    # Get the 50 most common words manually
-    most_common_words = sorted(word_counter.items(), key=lambda x: x[1], reverse=True)[:50]
-    
-    subdomain_report = {subdomain: len(urls) for subdomain, urls in subdomain_counter.items()}
-
-    # Output the report
     print(f"Longest page: {longest_page_filename} with {longest_page_word_count} words")
+
+    # Array of 50 most common words manually
+    most_common_words = sorted(tokenized_words.items(), key=lambda x: x[1], reverse=True)[:50]
     print("\n50 Most Common Words:")
     for word, count in most_common_words:
         print(f"{word}: {count}")
 
+    # Create dict of subdomain : freq
+    subdomain_report = {subdomain: len(subdomain_counter) for subdomain, subdomain_counter in subdomain_counter.items()}
     print("\nSubdomains in uci.edu:")
     for subdomain, count in sorted(subdomain_report.items()):
         print(f"{subdomain}, {count}")
 
 
 
-
 def main():
     # Returns a list of all the files in the tokens_by_subdomain folder
-    # json_files = [f for f in os.listdir("tokens_by_subdomain") if f.endswith('.json')]
-
-    json_files =
-    print(json_files)
-    # REMOVE THIS LATER !!! temp testing replacement
-    # json_files = "tokens_by_subdomain" #replace
-
-    # create_report(json_files)
+    json_files = [f for f in os.listdir("tokens_by_subdomain") if f.endswith('.json')]
+    create_report(json_files)
 
 if __name__ == "__main__":
     main()
