@@ -23,8 +23,7 @@ class Frontier(object):
         # Set to 4 to get the four main links first
         self.doc_count = 0
         self.lsh = MinHashLSH(threshold=0.85, num_perm=128)
-        self.longest_page = {}  # Holds URL:Length of longest page for report requirement #2
-
+        self.longest_page = {}  # Holds URL: Length of longest page for report requirement #2
         self.stats_file_path = "frontier_data.json"
 
         
@@ -64,7 +63,9 @@ class Frontier(object):
 
     def get_tbd_url(self):
         try:
-            return self.to_be_downloaded.get()
+            return self.to_be_downloaded.get(block=False)
+        except queue.Empty:
+            return None
         except IndexError:
             return None
         except KeyError:
