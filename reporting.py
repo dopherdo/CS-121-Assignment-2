@@ -1,3 +1,4 @@
+#CHATGPT
 
 import json
 import os
@@ -27,47 +28,73 @@ stopwords = {
     }
 
 
-def tokenize(tokens):
-    print("Tokenizing")
-    tokenized_words = []
-    word_counter = {}  # Manually count words using a dictionary
-    for word in tokens: #basically ensures word is a word and eliminates stopwords
+def tokenize(raw_words):
+    '''
+    Gets a list of words (raw_words) and tokenizes it
+    Returns: dict of unique words : frequency (unique_word_counter)
+    '''
+    tokenized_words = []    # List of words after tokenized
+    unique_word_counter = {}  # Manually count words using a dictionary
+
+    # Eliminate stopwords
+    for word in raw_words: 
         word = word.lower()
         cleaned_word = ''.join(char for char in word if char.isalnum())
-        if cleaned_word and cleaned_word not in stopwords:
+        if cleaned_word and cleaned_word not in stopwords and len(cleaned_word) > 1:
             tokenized_words.append(cleaned_word)
+
+    # Populate the unique_word_counter dict with unique words : frequency
     for word in tokenized_words:
-        if word in word_counter:
-            word_counter[word] += 1  # Increment count if word is already in dictionary
+        if word in unique_word_counter:
+            unique_word_counter[word] += 1  # Increment count if word is already in dictionary
         else:
-            word_counter[word] = 1
+            unique_word_counter[word] = 1
     
-    return word_counter # will have all words not in stopwords
+    print(f"Word Count: {len(raw_words)}    |    Tokenized Word Count: {len(tokenized_words)}    |    Unique Word Count: {len(unique_word_counter.items())}\n")
+    return unique_word_counter # will have all words not in stopwords
+
 
 
 def create_report(json_files):
-    longest_page_info = ("", 0)  # (filename, word count)
-    subdomain_counter = {}  # Regular dictionary to count unique URLs per subdomain
-    
+    '''
+    Parameters: json_files = list of json file names
+    Writes: To be implemented later
+    Returns: Nothing, writes to files
+    '''
+    longest_page_info = ("", 0)     # Initial longest tuple (url, word count)
+    subdomain_counter = {}          # Regular dictionary to count unique URLs per subdomain
+    tokenized_words = {}            # Dict of unique words : freq maintained for all the pages combined
 
-    for json_file in json_files: # -1 json file for each subdomain
+    # Iterates through each json file, populating our designated data structures
+    for json_file in json_files: 
+        # Grabbing and opening file
         file_path = os.path.join("tokens_by_subdomain", json_file)  # Full path to the file
         with open(file_path, 'r') as f: 
-            json_data = json.load(f)
-            word_count = 0
+            json_data = json.load(f) 
+
+
+            tokenized_word_count = 0
             
             keys = list(json_data.keys())  # Get all keys as a list
             subdomain_name = keys[1]  # Access the second key
             myData = json_data[subdomain_name] #gets the data for tokens
 
             
-            tokenized_words = tokenize(myData) # Dictionary of word:frequency
-            word_count = len(tokenized_words) # counts the number of words
-            print(tokenized_words)
+            # Tokenize myData and update the main tokenized_words dictionary
+            print(f"Tokenizing for {subdomain_name}")
+            file_token_counts = tokenize(myData)  # Dictionary of word: frequency for the current file
+            
+            for word, count in file_token_counts.items():
+                tokenized_word_count += count
+                if word in tokenized_words:
+                    tokenized_words[word] += count
+                else:
+                    tokenized_words[word] = count
 
+                
             # Check for the longest page for the report
-            if word_count > longest_page_info[1]:
-                longest_page_info = (json_file, word_count)
+            if tokenized_word_count > longest_page_info[1]:
+                longest_page_info = (json_file, tokenized_word_count)
 
             # Increment the count for the subdomain
                 if subdomain_name in subdomain_counter:
@@ -86,12 +113,9 @@ def create_report(json_files):
     for word, count in most_common_words:
         print(f"{word}: {count}")
 
-    # Create dict of subdomain : freq
-    subdomain_report = {subdomain: len(subdomain_counter) for subdomain, subdomain_counter in subdomain_counter.items()}
     print("\nSubdomains in uci.edu:")
-    for subdomain, count in sorted(subdomain_report.items()):
+    for subdomain, count in sorted(subdomain_counter.items()):
         print(f"{subdomain}, {count}")
-
 
 
 def main():

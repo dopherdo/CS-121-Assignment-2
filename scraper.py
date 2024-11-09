@@ -42,7 +42,7 @@ def extract_text_from_page(soup, url, frontier, folder_name="tokens_by_subdomain
     for element in soup(['script', 'style']):
         element.decompose()
 
-    curr_tokens = [] # TODO: SHOULD BE A JSON INSTEAD
+    curr_tokens = [] 
     word_count = 0
     # Function to clean and normalize text
     def clean_text(text):
@@ -89,7 +89,7 @@ def extract_text_from_page(soup, url, frontier, folder_name="tokens_by_subdomain
         frontier.add_potential_longest_page(url, word_count, curr_tokens)
 
     # Avoid low information pages 
-    if word_count < 100:
+    if word_count < 125:
         print()
         print(f"LOW DOCUMENT page! {url}")
         print()
@@ -110,13 +110,18 @@ def extract_text_from_page(soup, url, frontier, folder_name="tokens_by_subdomain
         if os.path.exists(json_tokens_file_path):
             with open(json_tokens_file_path, "r") as file:
                 existing_tokens = json.load(file)
-                # Add current tokens to existing ones
-                existing_tokens[curr_subdomain] = existing_tokens.get(curr_subdomain, []) + curr_tokens
-                page_count = existing_tokens.get("page_count", 0) + 1
-                tokens_to_save = {
-                    "page_count": page_count,
-                    **{k: v for k, v in existing_tokens.items() if k != "page_count"}
-                }
+            # Initialize the emptylist if the subdomain does not exist
+            if curr_subdomain not in existing_tokens:
+                existing_tokens[curr_subdomain] = []
+
+            # Add url : raw words
+            existing_tokens[curr_subdomain].append({url: curr_tokens})
+
+            page_count = existing_tokens.get("page_count", 0) + 1
+            tokens_to_save = {
+                "page_count": page_count,
+                **{k: v for k, v in existing_tokens.items() if k != "page_count"}
+            }
         else:
             # Create new tokens dictionary if file doesn't exist
             tokens_to_save = {
