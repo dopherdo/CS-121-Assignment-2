@@ -26,6 +26,8 @@ class Frontier(object):
         self.longest_page = {}  # Holds URL: Length of longest page for report requirement #2
         self.stats_file_path = "frontier_data.json"
 
+        self.longest_page_tokens =[]
+
         
         if not os.path.exists(self.config.save_file) and not restart:
             # Save file does not exist, but request to load save.
@@ -111,14 +113,15 @@ class Frontier(object):
                 if length > curr_length:
                     self.longest_page.clear()
                     self.longest_page[url] = length
-        self._save_data_to_file(tokens)
+                    self.longest_page_tokens = tokens
+        self._save_data_to_file()
     
-    def _save_data_to_file(self, tokens):
+    def _save_data_to_file(self):
         with self._lock:
             data = {
                 "doc_count": len(self.visited_urls),
                 "longest_page": self.longest_page,
-                "words": tokens
+                "words": self.longest_page_tokens
             }
             with open(self.stats_file_path, "w") as file:
                 json.dump(data, file, indent=4)
