@@ -126,7 +126,7 @@ def extract_text_from_page(soup, url, frontier, folder_name="tokens_by_subdomain
             # Create new tokens dictionary if file doesn't exist
             tokens_to_save = {
             "page_count": 1,
-            curr_subdomain: curr_tokens
+            curr_subdomain: [{url: curr_tokens}]
         }
         
         # Save tokens to file
