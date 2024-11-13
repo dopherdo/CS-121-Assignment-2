@@ -50,7 +50,6 @@ def tokenize(raw_words):
         else:
             unique_word_counter[word] = 1
     
-    print(f"Word Count: {len(raw_words)}    |    Tokenized Word Count: {len(tokenized_words)}    |    Unique Word Count: {len(unique_word_counter.items())}\n")
     return unique_word_counter # will have all words not in stopwords
 
 
@@ -64,7 +63,10 @@ def create_report(json_files):
     longest_page_info = ("", 0)     # Initial longest tuple (url, word count)
     subdomain_counter = {}          # Regular dictionary to count unique URLs per subdomain
     tokenized_words = {}            # Dict of unique words : freq maintained for all the pages combined
-
+    
+    url_highest_words = ("x", 0)
+    page_count = 0
+    
     # Iterates through each json file, populating our designated data structures
     for json_file in json_files: 
         # Grabbing and opening file
@@ -78,44 +80,54 @@ def create_report(json_files):
             keys = list(json_data.keys())  # Get all keys as a list
             subdomain_name = keys[1]  # Access the second key
             myData = json_data[subdomain_name] #gets the data for tokens
-
-            
-            # Tokenize myData and update the main tokenized_words dictionary
-            print(f"Tokenizing for {subdomain_name}")
-            file_token_counts = tokenize(myData)  # Dictionary of word: frequency for the current file
-            
-            for word, count in file_token_counts.items():
-                tokenized_word_count += count
-                if word in tokenized_words:
-                    tokenized_words[word] += count
-                else:
-                    tokenized_words[word] = count
-
+            dict_counter = 0
+            for dictionary in myData:
+                for url, words in dictionary.items():
+                    dict_counter += 1
+                    word_counter = 0
                 
-            # Check for the longest page for the report
-            if tokenized_word_count > longest_page_info[1]:
-                longest_page_info = (json_file, tokenized_word_count)
+                    # Tokenize myData and update the main tokenized_words dictionary
+                    file_token_counts = tokenize(words)  # Dictionary of word: frequency for the current file
+                    
+                    for word, count in file_token_counts.items():
+                        tokenized_word_count += count
+                        word_counter += count
+                        if word in tokenized_words:
+                            tokenized_words[word] += count
+                        else:
+                            tokenized_words[word] = count
 
-            # Increment the count for the subdomain
-                if subdomain_name in subdomain_counter:
-                    subdomain_counter[subdomain_name] += 1  # Increment if exists
-                else:
-                    subdomain_counter[subdomain_name] = 1  # Start count if new
-
+                    if word_counter > url_highest_words[1]:
+                        url_highest_words = (url, word_counter)
+                    # Check for the longest page for the report
+                    if tokenized_word_count > longest_page_info[1]:
+                        longest_page_info = (json_file, tokenized_word_count)
+                    page_count += 1
+                    # Increment the count for the subdomain
+                    if subdomain_name in subdomain_counter:
+                        subdomain_counter[subdomain_name] += 1  # Increment if exists
+                    else:
+                        subdomain_counter[subdomain_name] = 1  # Start count if new
+                        
+                        
+    # Num of unique pages
+    
+    print(f"\033[1m\033[4mUnique Pages:\033[0m\n{page_count}\n")
 
     # Longest Page
-    longest_page_filename, longest_page_word_count = longest_page_info
-    print(f"Longest page: {longest_page_filename} with {longest_page_word_count} words")
+    print(f"\033[1m\033[4mLongest page:\033[0m \nURL : {url_highest_words[0]}\nWord Count : {url_highest_words[1]}")
 
     # Array of 50 most common words manually
     most_common_words = sorted(tokenized_words.items(), key=lambda x: x[1], reverse=True)[:50]
-    print("\n50 Most Common Words:")
-    for word, count in most_common_words:
-        print(f"{word}: {count}")
+    print("\033[1m\033[4m\n50 Most Common Words:\033[0m")
+    words = [t[0] for t in most_common_words]
+    print(words)
+  
 
-    print("\nSubdomains in uci.edu:")
+    print("\033[1m\033[4m\nSubdomains in uci.edu:\033[0m")
     for subdomain, count in sorted(subdomain_counter.items()):
         print(f"{subdomain}, {count}")
+    print()
 
 
 def main():
